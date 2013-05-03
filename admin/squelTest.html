@@ -1,0 +1,111 @@
+~[if.~[gpv:action]#result]
+<!DOCTYPE html> 
+<html> 
+<head> 
+	<title>SQUEL Test</title> 
+<!-- Required style sheets: screen.css, and print.css --> 
+	<link href="/images/css/screen.css" rel="stylesheet" media="screen"> 
+	<link href="/images/css/print.css" rel="stylesheet" media="print"> 
+</head> 
+<body> 
+	~[wc:admin_header_css] 
+    <div id="breadcrumbs"> 
+		<!-- breadcrumb start -->Your breadcrumbs go here<!-- breadcrumb end --> 
+    </div> 
+<!-- start of main menu and content --> 
+	~[wc:admin_navigation_css] 
+<!-- Start of Page --> 
+	<h1>SQUEL Ad-Hoc Reporting Test</h1> 
+<!-- start of content area --> 
+	<div class="box-round"> 
+		<h2>Data Source</h2>
+		<div id="dataSource_Boundary">
+			<select id="dataSource_From">
+				<option value="">Select a source Table</option>
+			</select>
+		</div>
+		<h2>Display Fields</h2>
+		<a href="#" id="addFieldSelect" class="button no-float">Add</a>
+		<div id="displayFields_Boundary">
+		</div>
+		<h2>Filter</h2>
+	
+		<a href="#" id="getResults" class="button no-float">Execute</a>
+		<h2>Result</h2>
+		<div id="result">
+		</div>
+	</div> 
+<!-- end of content area --> 
+	~[wc:admin_footer_css] 
+<!-- required scripts --> 
+	~[wc:commonscripts] 
+	<script src="/scripts/squel/squel.js"></script>
+	<script type="text/javascript">
+		var dataModel = new Object;
+		var iFieldSelect = 0;
+		var query = squel.select(); //Creates our query builder object
+		
+		function update_dataSource_From() {
+			$j.each(dataModel.tables, function(key, value) {
+				$j('#dataSource_From').append('<option value="' + key + '">' + key + '</option>');
+			});
+		} // update_dataSource_From() Adds tables to the FROM select box.
+		
+		$j(document).ready(function() {
+			$j.getJSON("squelDataModel.json")
+				.done(function(data) {
+					dataModel = data;
+					update_dataSource_From();
+				});
+		}); //Get the dataModel
+		
+		$j('#addFieldSelect').click(function() {
+			$j('#displayFields_Boundary').append(
+				'<select id="displayField_'+ iFieldSelect + '"></select>'
+			);
+			$j.each(dataModel.tables[$j('#dataSource_From').val()].fields, function(index, value) {
+				$j('#displayField_'+ iFieldSelect).append (
+					'<option value="' + value + '">' + value + '</option>'
+				);
+			});
+			iFieldSelect++;
+			return false;
+		}); // Creates the field select inputs and adds options to them. Add a counter on the end of the id so they are unique.
+		
+		$j('#getResults').click(function() {
+			query.from($j('#dataSource_From').val()); // Adds the from table to the query builder
+			var i = 0;
+			$j("select[id^='displayField_']").each(function() {
+				query.field($j(this).val());
+				i++;
+			}); //Counts how many fields we're pulling
+			var sT = String.fromCharCode(126); // tilde character code
+			var resultTemplate = ""; // Create a zero length string for our template. Not sure if this is needed.
+			
+			for (var col = 1;col <= i;col++) {
+				resultTemplate = resultTemplate + "<td>" + sT + "(" + col + ")</td>";
+			} //Create our results template. For each field pulled, create a column and add in the powerschool code.
+			
+			var qOutput = sT + "[tlist_sql;" + query.toString() + ";]<tr>" + resultTemplate + "</tr>[/tlist_sql]"; //create our entire tlist_sql statement.
+			
+			$j.post("/~[self]",{
+				action: "result",
+				query: qOutput
+			}).done(function(data) {
+				$j('#result').html(data)
+			});
+			query = squel.select();
+			return false;
+		}); //Call this document and place the returned data into the result div. Then reset the query object.
+	</script>
+</body> 
+</html>
+[else]
+<table>
+<tbody>
+<tr>
+~[gpv:query]
+</tr>
+</tbody>
+</table>
+[/if]

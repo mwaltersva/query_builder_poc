@@ -79,14 +79,15 @@
 				query.field($j(this).val());
 				i++;
 			}); //Counts how many fields we're pulling
-			var sT = String.fromCharCode(126); // tilde character code
+			var sT = "superCalifragilisticExpealidoshis"; // tilde character code
 			var resultTemplate = ""; // Create a zero length string for our template. Not sure if this is needed.
 			
 			for (var col = 1;col <= i;col++) {
 				resultTemplate = resultTemplate + "<td>" + sT + "(" + col + ")</td>";
 			} //Create our results template. For each field pulled, create a column and add in the powerschool code.
 			
-			var qOutput = sT + "[tlist_sql;" + query.toString() + ";]<tr>" + resultTemplate + "</tr>[/tlist_sql]"; //create our entire tlist_sql statement.
+			var q = sT + "[tlist_sql;" + query.toString() + ";]<tr>" + resultTemplate + "</tr>[/tlist_sql]"; //create our entire tlist_sql statement.
+			qOutput = q.replace(/~/g,sT);
 			
 			$j.post("/~[self]",{
 				action: "result",
@@ -104,7 +105,7 @@
 <table>
 <tbody>
 <tr>
-~[gpv:query]
+~[gpv:query;;replace=superCalifragilisticExpealidoshis,~]
 </tr>
 </tbody>
 </table>
